@@ -667,7 +667,6 @@ st.caption(
     "region, a strength, a milk type, or a budget, and I'll match you to "
     "real products."
 )
-st.caption("💡 On mobile? Tap the **»** arrow (top-left) anytime to open the filter panel.")
 
 WELCOME_MESSAGE = (
     "Hi! 👋 I'm your coffee recommender, focused only on Indian coffee.\n\n"
@@ -678,6 +677,27 @@ WELCOME_MESSAGE = (
     "- *\"Coffee under ₹250\"*\n\n"
     "Not sure what to ask? Tap one of the examples below to get started."
 )
+
+with st.expander("🔍 Or filter manually", expanded=False):
+    sel_region = st.selectbox("Region", ["Any"] + REGION_VOCAB)
+    sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
+    sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
+    sel_budget = st.number_input("Max price (₹)", min_value=0, value=0, step=50,
+                                  help="Leave at 0 for no budget limit")
+    if st.button("Get recommendations"):
+        parts = []
+        if sel_region != "Any":
+            parts.append(sel_region)
+        if sel_strength != "Any":
+            parts.append(sel_strength.lower())
+        if sel_milk != "Any":
+            parts.append(f"{sel_milk.lower()} milk")
+        if sel_budget:
+            parts.append(f"under {sel_budget}")
+        summary_text = "Sidebar filter: " + ", ".join(parts) if parts else "Sidebar filter: any coffee"
+        st.session_state.setdefault("messages", [])
+        process_message(summary_text)
+        st.rerun()
 
 
 FOLLOWUP_MORE_PHRASES = ["show me more", "show the others", "other options", "see them",
@@ -773,28 +793,6 @@ def process_message(text):
     log_interaction(text, entities, scope, num_matches)
     st.session_state["messages"].append(("assistant", reply, products_for_images))
 
-
-with st.sidebar:
-    st.header("Or filter manually")
-    sel_region = st.selectbox("Region", ["Any"] + REGION_VOCAB)
-    sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
-    sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
-    sel_budget = st.number_input("Max price (₹)", min_value=0, value=0, step=50,
-                                  help="Leave at 0 for no budget limit")
-    if st.button("Get recommendations"):
-        parts = []
-        if sel_region != "Any":
-            parts.append(sel_region)
-        if sel_strength != "Any":
-            parts.append(sel_strength.lower())
-        if sel_milk != "Any":
-            parts.append(f"{sel_milk.lower()} milk")
-        if sel_budget:
-            parts.append(f"under {sel_budget}")
-        summary_text = "Sidebar filter: " + ", ".join(parts) if parts else "Sidebar filter: any coffee"
-        st.session_state.setdefault("messages", [])
-        process_message(summary_text)
-        st.rerun()
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [("assistant", WELCOME_MESSAGE, None)]
