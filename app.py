@@ -814,6 +814,10 @@ for idx, (role, content, product_rows) in enumerate(st.session_state["messages"]
 
         if role == "assistant" and "**My pick:" in content:
             st.session_state["last_recommended_product"] = content.split("**My pick:")[1].split("**")[0].strip()
+        elif role == "assistant" and idx > 0:
+            # any real response beyond the welcome message counts as "had a chat worth rating",
+            # even if it was a fallback/no-exact-match reply rather than a confident single pick
+            st.session_state.setdefault("has_had_response", True)
 
 # quick-start buttons only shown before the user has typed anything, so
 # they don't clutter an already-active conversation
@@ -838,14 +842,17 @@ st.divider()
 if st.session_state["last_recommended_product"]:
     st.info("👆 **Your recommendation is above this line** — scroll up to see it if you landed here first.")
 
-if st.session_state["last_recommended_product"] and not st.session_state["conversation_rated"]:
-    st.markdown(f"**{random.choice(CLOSING_MESSAGES)}** I hope *{st.session_state['last_recommended_product']}* "
-               f"turns out to be exactly what you were looking for.")
+if st.session_state.get("has_had_response") and not st.session_state["conversation_rated"]:
+    if st.session_state["last_recommended_product"]:
+        st.markdown(f"**{random.choice(CLOSING_MESSAGES)}** I hope *{st.session_state['last_recommended_product']}* "
+                   f"turns out to be exactly what you were looking for.")
+    else:
+        st.markdown(f"**{random.choice(CLOSING_MESSAGES)}** I hope one of the suggestions above works for you!")
     st.caption("Before you go — how helpful was this chat overall?")
     star_cols = st.columns(5)
     for star_n, scol in enumerate(star_cols, start=1):
         if scol.button("⭐" * star_n, key=f"session_rate_{star_n}"):
-            log_rating(st.session_state["last_recommended_product"], star_n)
+            log_rating(st.session_state["last_recommended_product"] or "No exact match - fallback suggestion", star_n)
             st.session_state["conversation_rated"] = True
             st.rerun()
 elif st.session_state["conversation_rated"]:
