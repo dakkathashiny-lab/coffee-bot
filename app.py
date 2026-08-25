@@ -463,13 +463,23 @@ def relaxed_matches(entities):
 def format_no_match(entities):
     loose, level, label = relaxed_matches(entities)
     if not loose.empty:
-        lines = [f"I don't have anything matching *all* of that, but here's what I do have from {label}:\n"]
+        budget_note = ""
+        if "budget" in entities:
+            cheapest = loose["Price_INR"].min()
+            if cheapest > entities["budget"]:
+                budget_note = (f" (the cheapest option from {label} is ₹{int(cheapest)}, "
+                               f"above your ₹{entities['budget']} budget)")
+        lines = [f"I don't have anything matching *all* of that{budget_note}, but here's what I do have from {label}:\n"]
         for _, row in loose.head(3).iterrows():
             lines.append(f"- **{row['Brand']} — {row['Product_Name']}** "
                          f"({row['Brew_Format']}, {row['Strength']}) — {format_price(row)}")
         return "\n".join(lines)
 
     # nothing matched at all - point to what IS covered rather than a dead end
+    if "budget" in entities:
+        cheapest_overall = products["Price_INR"].min()
+        return (f"I couldn't find anything under ₹{entities['budget']} — my cheapest product overall is "
+                f"₹{int(cheapest_overall)}. Try raising your budget, or drop it to see all options.")
     sample_regions = ", ".join(sorted(products["Region"].unique())[:6])
     return (
         "I couldn't find a match for that. My catalog currently covers coffee from "
@@ -605,7 +615,7 @@ def log_rating(recommended_product, stars):
 
 
 # ---------- UI ----------
-st.set_page_config(page_title="India Coffee Recommender", page_icon="☕")
+st.set_page_config(page_title="India Coffee Recommender", page_icon="☕", initial_sidebar_state="expanded")
 
 # Hidden admin dashboard - only visible with the correct secret key in the URL
 # e.g. yourapp.streamlit.app/?admin=coffee2026
@@ -657,6 +667,7 @@ st.caption(
     "region, a strength, a milk type, or a budget, and I'll match you to "
     "real products."
 )
+st.caption("💡 On mobile? Tap the **»** arrow (top-left) anytime to open the filter panel.")
 
 WELCOME_MESSAGE = (
     "Hi! 👋 I'm your coffee recommender, focused only on Indian coffee.\n\n"
