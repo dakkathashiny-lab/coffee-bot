@@ -606,6 +606,50 @@ def log_rating(recommended_product, stars):
 
 # ---------- UI ----------
 st.set_page_config(page_title="India Coffee Recommender", page_icon="☕")
+
+# Hidden admin dashboard - only visible with the correct secret key in the URL
+# e.g. yourapp.streamlit.app/?admin=coffee2026
+ADMIN_SECRET = "coffee2026"  # <-- change this to your own secret word
+query_params = st.query_params
+if query_params.get("admin") == ADMIN_SECRET:
+    st.title("☕ Admin Dashboard")
+    st.caption("Hidden view - not linked anywhere in the normal chat. Bookmark this URL to check back anytime.")
+
+    st.divider()
+    st.subheader("⭐ Ratings")
+    if os.path.exists(RATING_LOG_FILE):
+        ratings_df = pd.read_csv(RATING_LOG_FILE)
+        if not ratings_df.empty:
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total ratings", len(ratings_df))
+            col2.metric("Average stars", f"{ratings_df['stars'].mean():.1f} ⭐")
+            col3.metric("5-star ratings", int((ratings_df["stars"] == 5).sum()))
+            st.bar_chart(ratings_df["stars"].value_counts().sort_index())
+            st.dataframe(ratings_df.sort_values("timestamp", ascending=False), use_container_width=True, hide_index=True)
+            st.download_button("Download ratings as CSV", ratings_df.to_csv(index=False), "ratings_log.csv", "text/csv")
+        else:
+            st.info("Ratings file exists but is empty.")
+    else:
+        st.info("No ratings collected yet in this session/deployment.")
+
+    st.divider()
+    st.subheader("💬 All Interactions")
+    if os.path.exists(LOG_FILE):
+        interactions_df = pd.read_csv(LOG_FILE)
+        if not interactions_df.empty:
+            st.metric("Total messages logged", len(interactions_df))
+            st.dataframe(interactions_df.sort_values("timestamp", ascending=False), use_container_width=True, hide_index=True)
+            st.download_button("Download interactions as CSV", interactions_df.to_csv(index=False), "interaction_log.csv", "text/csv")
+        else:
+            st.info("Interaction log exists but is empty.")
+    else:
+        st.info("No interactions logged yet in this session/deployment.")
+
+    st.divider()
+    st.caption("⚠️ Reminder: on free hosting, these files reset whenever the app restarts or sleeps from "
+               "inactivity. Download the CSVs above periodically if you want to keep the history.")
+    st.stop()  # don't render the normal chat below when in admin mode
+
 st.title("☕ India Coffee Recommender")
 st.caption(
     "I help you find Indian coffee brands based on your taste — no more "
