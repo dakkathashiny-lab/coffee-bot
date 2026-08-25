@@ -771,6 +771,7 @@ def process_message(text):
 
     log_interaction(text, entities, scope, num_matches)
     st.session_state["messages"].append(("assistant", reply, products_for_images))
+    st.session_state["scroll_to_latest"] = True
 
 
 if "messages" not in st.session_state:
@@ -802,7 +803,10 @@ with st.expander("🔍 Or filter manually", expanded=True):
         process_message(summary_text)
         st.rerun()
 
+total_messages = len(st.session_state["messages"])
 for idx, (role, content, product_rows) in enumerate(st.session_state["messages"]):
+    if idx == total_messages - 1:
+        st.markdown('<div id="latest-response-anchor"></div>', unsafe_allow_html=True)
     with st.chat_message(role):
         st.markdown(content)
         if product_rows is not None and not product_rows.empty:
@@ -818,6 +822,15 @@ for idx, (role, content, product_rows) in enumerate(st.session_state["messages"]
             # any real response beyond the welcome message counts as "had a chat worth rating",
             # even if it was a fallback/no-exact-match reply rather than a confident single pick
             st.session_state["has_had_response"] = True
+
+if st.session_state.get("scroll_to_latest"):
+    st.session_state["scroll_to_latest"] = False
+    st.markdown("""
+        <script>
+        const anchor = window.parent.document.getElementById("latest-response-anchor");
+        if (anchor) { anchor.scrollIntoView({behavior: "smooth", block: "start"}); }
+        </script>
+    """, unsafe_allow_html=True)
 
 # quick-start buttons only shown before the user has typed anything, so
 # they don't clutter an already-active conversation
