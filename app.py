@@ -678,7 +678,7 @@ WELCOME_MESSAGE = (
     "Not sure what to ask? Tap one of the examples below to get started."
 )
 
-with st.expander("🔍 Or filter manually", expanded=False):
+with st.expander("🔍 Or filter manually", expanded=True):
     sel_region = st.selectbox("Region", ["Any"] + REGION_VOCAB)
     sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
     sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
@@ -694,7 +694,7 @@ with st.expander("🔍 Or filter manually", expanded=False):
             parts.append(f"{sel_milk.lower()} milk")
         if sel_budget:
             parts.append(f"under {sel_budget}")
-        summary_text = "Sidebar filter: " + ", ".join(parts) if parts else "Sidebar filter: any coffee"
+        summary_text = "Manual filter: " + ", ".join(parts) if parts else "Manual filter: any coffee"
         st.session_state.setdefault("messages", [])
         process_message(summary_text)
         st.rerun()
@@ -830,6 +830,9 @@ if user_input:
     st.rerun()
 
 st.divider()
+
+if st.session_state["last_recommended_product"]:
+    st.info("👆 **Your recommendation is above this line** — scroll up to see it if you landed here first.")
 
 if st.session_state["last_recommended_product"] and not st.session_state["conversation_rated"]:
     st.markdown(f"**{random.choice(CLOSING_MESSAGES)}** I hope *{st.session_state['last_recommended_product']}* "
