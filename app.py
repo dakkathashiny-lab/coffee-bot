@@ -794,6 +794,7 @@ with st.sidebar:
         summary_text = "Sidebar filter: " + ", ".join(parts) if parts else "Sidebar filter: any coffee"
         st.session_state.setdefault("messages", [])
         process_message(summary_text)
+        st.session_state["auto_collapse_sidebar"] = True
         st.rerun()
 
 if "messages" not in st.session_state:
@@ -847,3 +848,25 @@ elif st.session_state["conversation_rated"]:
     st.caption("Thanks for rating this chat! 🙏")
 
 st.markdown(f"Enjoyed the recommendations? [Share quick feedback here]({GOOGLE_FORM_URL}) — it takes 1 minute.")
+
+if st.session_state.get("auto_collapse_sidebar"):
+    st.session_state["auto_collapse_sidebar"] = False
+    st.markdown("""
+        <script>
+        (function() {
+            function tryCollapse(attempts) {
+                if (attempts <= 0) return;
+                const doc = window.parent.document;
+                const btn = doc.querySelector('[data-testid="stSidebarCollapseButton"] button')
+                    || doc.querySelector('[data-testid="baseButton-headerNoPadding"]')
+                    || doc.querySelector('button[kind="headerNoPadding"]');
+                if (btn) {
+                    btn.click();
+                } else {
+                    setTimeout(function() { tryCollapse(attempts - 1); }, 150);
+                }
+            }
+            tryCollapse(10);
+        })();
+        </script>
+    """, unsafe_allow_html=True)
