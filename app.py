@@ -615,7 +615,7 @@ def log_rating(recommended_product, stars):
 
 
 # ---------- UI ----------
-st.set_page_config(page_title="India Coffee Recommender", page_icon="☕", initial_sidebar_state="expanded")
+st.set_page_config(page_title="India Coffee Recommender", page_icon="☕")
 
 # Hidden admin dashboard - only visible with the correct secret key in the URL
 # e.g. yourapp.streamlit.app/?admin=coffee2026
