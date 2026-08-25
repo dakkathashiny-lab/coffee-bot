@@ -687,6 +687,9 @@ FOLLOWUP_MORE_PHRASES = ["show me more", "show the others", "other options", "se
 def process_message(text):
     """Single shared pipeline for chat input, quick-start buttons, and the
     sidebar filter, so every path gets logged and answered consistently."""
+    # show only the latest exchange, not a growing history - clear everything
+    # before adding this new query, so old answers don't stay stacked on screen
+    st.session_state["messages"] = []
     st.session_state["messages"].append(("user", text, None))
 
     # follow-up to "N other options also fit - want to see them?"
