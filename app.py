@@ -779,7 +779,7 @@ if "conversation_rated" not in st.session_state:
 if "last_recommended_product" not in st.session_state:
     st.session_state["last_recommended_product"] = None
 
-with st.expander("🔍 Or filter manually", expanded=False):
+with st.expander("🔍 Or filter manually", expanded=True):
     sel_region = st.selectbox("Region", ["Any"] + REGION_VOCAB)
     sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
     sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
