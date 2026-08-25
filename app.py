@@ -779,16 +779,8 @@ if "conversation_rated" not in st.session_state:
     st.session_state["conversation_rated"] = False
 if "last_recommended_product" not in st.session_state:
     st.session_state["last_recommended_product"] = None
-if "just_used_filter" not in st.session_state:
-    st.session_state["just_used_filter"] = False
 
-# collapse the panel only for the one render right after a search, then
-# immediately reset - otherwise it would keep force-collapsing on every
-# future interaction (opening it, changing a dropdown), fighting the user
-should_collapse_now = st.session_state["just_used_filter"]
-st.session_state["just_used_filter"] = False
-
-with st.expander("🔍 Or filter manually", expanded=not should_collapse_now):
+with st.expander("🔍 Or filter manually", expanded=True):
     sel_region = st.selectbox("Region", ["Any"] + REGIONS_WITH_PRODUCTS)
     sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
     sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
@@ -806,7 +798,6 @@ with st.expander("🔍 Or filter manually", expanded=not should_collapse_now):
             parts.append(f"under {sel_budget}")
         summary_text = "Manual filter: " + ", ".join(parts) if parts else "Manual filter: any coffee"
         process_message(summary_text)
-        st.session_state["just_used_filter"] = True
         st.rerun()
 
 for idx, (role, content, product_rows) in enumerate(st.session_state["messages"]):
