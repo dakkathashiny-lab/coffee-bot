@@ -778,8 +778,10 @@ if "conversation_rated" not in st.session_state:
     st.session_state["conversation_rated"] = False
 if "last_recommended_product" not in st.session_state:
     st.session_state["last_recommended_product"] = None
+if "just_used_filter" not in st.session_state:
+    st.session_state["just_used_filter"] = False
 
-with st.expander("🔍 Or filter manually", expanded=True):
+with st.expander("🔍 Or filter manually", expanded=not st.session_state["just_used_filter"]):
     sel_region = st.selectbox("Region", ["Any"] + REGION_VOCAB)
     sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
     sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
@@ -797,6 +799,7 @@ with st.expander("🔍 Or filter manually", expanded=True):
             parts.append(f"under {sel_budget}")
         summary_text = "Manual filter: " + ", ".join(parts) if parts else "Manual filter: any coffee"
         process_message(summary_text)
+        st.session_state["just_used_filter"] = True
         st.rerun()
 
 for idx, (role, content, product_rows) in enumerate(st.session_state["messages"]):
