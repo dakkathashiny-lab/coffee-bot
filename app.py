@@ -170,6 +170,7 @@ def load_data():
 products, regions = load_data()
 
 REGION_VOCAB = sorted(set(products["Region"]) | set(regions["Region"]))
+REGIONS_WITH_PRODUCTS = sorted(set(products["Region"]))  # for the dropdown - avoid selectable regions with zero real products
 STATE_VOCAB = sorted(set(products["State"]) | set(regions["State"]))
 BRAND_VOCAB = sorted(products["Brand"].unique())
 
@@ -782,7 +783,7 @@ if "just_used_filter" not in st.session_state:
     st.session_state["just_used_filter"] = False
 
 with st.expander("🔍 Or filter manually", expanded=not st.session_state["just_used_filter"]):
-    sel_region = st.selectbox("Region", ["Any"] + REGION_VOCAB)
+    sel_region = st.selectbox("Region", ["Any"] + REGIONS_WITH_PRODUCTS)
     sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
     sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
     sel_budget = st.number_input("Max price (₹)", min_value=0, value=0, step=50,
