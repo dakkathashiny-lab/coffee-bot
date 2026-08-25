@@ -827,8 +827,30 @@ if st.session_state.get("scroll_to_latest"):
     st.session_state["scroll_to_latest"] = False
     st.markdown("""
         <script>
-        const anchor = window.parent.document.getElementById("latest-response-anchor");
-        if (anchor) { anchor.scrollIntoView({behavior: "smooth", block: "start"}); }
+        (function() {
+            function getDoc() {
+                try { if (window.parent && window.parent.document) return window.parent.document; } catch (e) {}
+                return document;
+            }
+            function tryScroll(attemptsLeft) {
+                const doc = getDoc();
+                const anchor = doc.getElementById("latest-response-anchor");
+                if (anchor) {
+                    anchor.scrollIntoView({behavior: "smooth", block: "start"});
+                    return;
+                }
+                if (attemptsLeft > 0) {
+                    setTimeout(function() { tryScroll(attemptsLeft - 1); }, 200);
+                } else {
+                    // fallback: couldn't find the specific anchor, just scroll the whole page down
+                    try {
+                        const win = window.parent || window;
+                        win.scrollTo({top: win.document.body.scrollHeight, behavior: "smooth"});
+                    } catch (e) {}
+                }
+            }
+            tryScroll(10);
+        })();
         </script>
     """, unsafe_allow_html=True)
 
