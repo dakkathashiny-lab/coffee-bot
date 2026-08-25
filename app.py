@@ -814,10 +814,10 @@ for idx, (role, content, product_rows) in enumerate(st.session_state["messages"]
 
         if role == "assistant" and "**My pick:" in content:
             st.session_state["last_recommended_product"] = content.split("**My pick:")[1].split("**")[0].strip()
-        elif role == "assistant" and idx > 0:
+        if role == "assistant" and idx > 0:
             # any real response beyond the welcome message counts as "had a chat worth rating",
             # even if it was a fallback/no-exact-match reply rather than a confident single pick
-            st.session_state.setdefault("has_had_response", True)
+            st.session_state["has_had_response"] = True
 
 # quick-start buttons only shown before the user has typed anything, so
 # they don't clutter an already-active conversation
