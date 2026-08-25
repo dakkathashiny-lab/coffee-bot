@@ -822,8 +822,11 @@ if len(st.session_state["messages"]) == 1:
             process_message(prompt)
             st.rerun()
 
-user_input = st.chat_input("e.g. I had strong coffee in Chikmagalur, want something similar")
-if user_input:
+with st.form(key="user_message_form", clear_on_submit=True):
+    user_input = st.text_input("Ask me anything about Indian coffee:",
+                                placeholder="e.g. I had strong coffee in Chikmagalur, want something similar")
+    submitted = st.form_submit_button("Send")
+if submitted and user_input:
     process_message(user_input)
     st.rerun()
 
