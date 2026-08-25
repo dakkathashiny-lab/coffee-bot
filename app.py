@@ -678,28 +678,6 @@ WELCOME_MESSAGE = (
     "Not sure what to ask? Tap one of the examples below to get started."
 )
 
-with st.expander("🔍 Or filter manually", expanded=True):
-    sel_region = st.selectbox("Region", ["Any"] + REGION_VOCAB)
-    sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
-    sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
-    sel_budget = st.number_input("Max price (₹)", min_value=0, value=0, step=50,
-                                  help="Leave at 0 for no budget limit")
-    if st.button("Get recommendations"):
-        parts = []
-        if sel_region != "Any":
-            parts.append(sel_region)
-        if sel_strength != "Any":
-            parts.append(sel_strength.lower())
-        if sel_milk != "Any":
-            parts.append(f"{sel_milk.lower()} milk")
-        if sel_budget:
-            parts.append(f"under {sel_budget}")
-        summary_text = "Manual filter: " + ", ".join(parts) if parts else "Manual filter: any coffee"
-        st.session_state.setdefault("messages", [])
-        process_message(summary_text)
-        st.rerun()
-
-
 FOLLOWUP_MORE_PHRASES = ["show me more", "show the others", "other options", "see them",
                           "show alternatives", "other option", "more options", "yes show",
                           "show more", "show other", "see other", "what else"]
@@ -800,6 +778,26 @@ if "conversation_rated" not in st.session_state:
     st.session_state["conversation_rated"] = False
 if "last_recommended_product" not in st.session_state:
     st.session_state["last_recommended_product"] = None
+
+with st.expander("🔍 Or filter manually", expanded=True):
+    sel_region = st.selectbox("Region", ["Any"] + REGION_VOCAB)
+    sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
+    sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
+    sel_budget = st.number_input("Max price (₹)", min_value=0, value=0, step=50,
+                                  help="Leave at 0 for no budget limit")
+    if st.button("Get recommendations"):
+        parts = []
+        if sel_region != "Any":
+            parts.append(sel_region)
+        if sel_strength != "Any":
+            parts.append(sel_strength.lower())
+        if sel_milk != "Any":
+            parts.append(f"{sel_milk.lower()} milk")
+        if sel_budget:
+            parts.append(f"under {sel_budget}")
+        summary_text = "Manual filter: " + ", ".join(parts) if parts else "Manual filter: any coffee"
+        process_message(summary_text)
+        st.rerun()
 
 for idx, (role, content, product_rows) in enumerate(st.session_state["messages"]):
     with st.chat_message(role):
