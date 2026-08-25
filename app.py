@@ -781,12 +781,14 @@ if "last_recommended_product" not in st.session_state:
     st.session_state["last_recommended_product"] = None
 
 with st.expander("🔍 Or filter manually", expanded=True):
-    sel_region = st.selectbox("Region", ["Any"] + REGIONS_WITH_PRODUCTS)
-    sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"])
-    sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types())
-    sel_budget = st.number_input("Max price (₹)", min_value=0, value=0, step=50,
-                                  help="Leave at 0 for no budget limit")
-    if st.button("Get recommendations"):
+    with st.form(key="filter_form"):
+        sel_region = st.selectbox("Region", ["Any"] + REGIONS_WITH_PRODUCTS, key="filter_region")
+        sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"], key="filter_strength")
+        sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types(), key="filter_milk")
+        sel_budget = st.number_input("Max price (₹)", min_value=0, value=0, step=50,
+                                      help="Leave at 0 for no budget limit", key="filter_budget")
+        filter_submitted = st.form_submit_button("Get recommendations")
+    if filter_submitted:
         parts = []
         if sel_region != "Any":
             parts.append(sel_region)
