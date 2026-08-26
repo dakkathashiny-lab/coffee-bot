@@ -815,12 +815,6 @@ with st.expander("🔍 Or filter manually", expanded=True):
         sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"], key="filter_strength")
         sel_milk = st.selectbox("Milk", ["Any", "Black (No Milk)"] + available_milk_types(), key="filter_milk")
         sel_brew_format = st.selectbox("Brew Format", ["Any"] + available_brew_formats(), key="filter_brew_format")
-        sel_price_band = st.selectbox(
-            "Price Range",
-            ["Any", "Under ₹50", "₹50 – ₹100", "₹100 – ₹200", "₹200 – ₹300", "₹300 – ₹500", "Above ₹500"],
-            key="filter_price_band",
-            help="Based on real prices in the catalog (₹2 – ₹940)"
-        )
         filter_submitted = st.form_submit_button("Get recommendations")
     if filter_submitted:
         parts = []
@@ -834,16 +828,6 @@ with st.expander("🔍 Or filter manually", expanded=True):
             parts.append(f"{sel_milk.lower()} milk")
         if sel_brew_format != "Any":
             parts.append(sel_brew_format)
-        price_band_text = {
-            "Under ₹50": "under 50",
-            "₹50 – ₹100": "between 50 to 100",
-            "₹100 – ₹200": "between 100 to 200",
-            "₹200 – ₹300": "between 200 to 300",
-            "₹300 – ₹500": "between 300 to 500",
-            "Above ₹500": "above 500",
-        }.get(sel_price_band)
-        if price_band_text:
-            parts.append(price_band_text)
         summary_text = "Manual filter: " + ", ".join(parts) if parts else "Manual filter: any coffee"
         process_message(summary_text)
         st.rerun()
