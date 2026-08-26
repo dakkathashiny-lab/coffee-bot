@@ -308,7 +308,7 @@ def extract_entities(text):
         if flavor in text_l:
             entities["flavor"] = flavor
             break
-    if "flavor" not in entities and any(w in text_l for w in FLAVOR_TRIGGER_WORDS):
+    if "flavor" not in entities and "milk" not in text_l and any(w in text_l for w in FLAVOR_TRIGGER_WORDS):
         entities["unknown_flavor"] = True
 
     for t in TYPE_KEYWORDS:
@@ -333,8 +333,20 @@ def extract_entities(text):
                 break
 
     budget_match = re.search(r"(?:under|below|less than|within)\s*(?:rs\.?|₹)?\s*(\d+)", text_l)
-    if budget_match:
+    range_match = re.search(r"(?:between|priced)?\s*(?:rs\.?|₹)?\s*(\d+)\s*(?:to|-|and)\s*(?:rs\.?|₹)?\s*(\d+)", text_l)
+    above_match = re.search(r"above\s*(?:rs\.?|₹)?\s*(\d+)", text_l)
+    bare_price_match = re.search(r"(?:₹\s*(\d+)|(\d+)\s*(?:rs\.?|rupees?))\b", text_l)
+    if range_match:
+        entities["budget_min"] = int(range_match.group(1))
+        entities["budget"] = int(range_match.group(2))
+    elif above_match:
+        entities["budget_min"] = int(above_match.group(1))
+    elif budget_match:
         entities["budget"] = int(budget_match.group(1))
+    elif bare_price_match:
+        # informal phrasing like "2rs product" or "₹2 coffee" with no under/below/above -
+        # treat the mentioned number as the price ceiling, the most sensible interpretation
+        entities["budget"] = int(bare_price_match.group(1) or bare_price_match.group(2))
     elif any(k in text_l for k in BUDGET_VAGUE_KEYWORDS):
         entities["budget"] = 250  # rough "budget option" cutoff, tune as you collect real prices
 
@@ -397,6 +409,8 @@ def filter_products(entities):
         df = df[df["Packaging_Type"].str.lower() == entities["packaging"].lower()]
     if "budget" in entities and not entities.get("is_lookup"):
         df = df[df["Price_INR"] <= entities["budget"]]
+    if "budget_min" in entities and not entities.get("is_lookup"):
+        df = df[df["Price_INR"] >= entities["budget_min"]]
     return df
 
 
@@ -573,7 +587,11 @@ def build_reason(entities):
         parts.append(f"prepared as {entities['brew_format'].lower()}")
     if "packaging" in entities:
         parts.append(f"in {entities['packaging'].lower()}")
-    if "budget" in entities:
+    if "budget_min" in entities and "budget" in entities:
+        parts.append(f"priced between ₹{entities['budget_min']} and ₹{entities['budget']}")
+    elif "budget_min" in entities:
+        parts.append(f"above ₹{entities['budget_min']}")
+    elif "budget" in entities:
         parts.append(f"within ₹{entities['budget']}")
 
     if not parts:
@@ -788,9 +806,14 @@ with st.expander("🔍 Or filter manually", expanded=True):
     with st.form(key="filter_form"):
         sel_region = st.selectbox("Region", ["Any"] + REGIONS_WITH_PRODUCTS, key="filter_region")
         sel_strength = st.selectbox("Strength", ["Any", "Strong", "Medium", "Mild"], key="filter_strength")
-        sel_milk = st.selectbox("Milk", ["Any"] + available_milk_types(), key="filter_milk")
-        sel_budget = st.number_input("Max price (₹)", min_value=0, value=0, step=50,
-                                      help="Leave at 0 for no budget limit", key="filter_budget")
+        sel_milk = st.selectbox("Milk", ["Any", "Black (No Milk)"] + available_milk_types(), key="filter_milk")
+        sel_brew_format = st.selectbox("Brew Format", ["Any"] + available_brew_formats(), key="filter_brew_format")
+        sel_price_band = st.selectbox(
+            "Price Range",
+            ["Any", "Under ₹50", "₹50 – ₹100", "₹100 – ₹200", "₹200 – ₹300", "₹300 – ₹500", "Above ₹500"],
+            key="filter_price_band",
+            help="Based on real prices in the catalog (₹2 – ₹940)"
+        )
         filter_submitted = st.form_submit_button("Get recommendations")
     if filter_submitted:
         parts = []
@@ -798,10 +821,22 @@ with st.expander("🔍 Or filter manually", expanded=True):
             parts.append(sel_region)
         if sel_strength != "Any":
             parts.append(sel_strength.lower())
-        if sel_milk != "Any":
+        if sel_milk == "Black (No Milk)":
+            parts.append("black, no milk")
+        elif sel_milk != "Any":
             parts.append(f"{sel_milk.lower()} milk")
-        if sel_budget:
-            parts.append(f"under {sel_budget}")
+        if sel_brew_format != "Any":
+            parts.append(sel_brew_format)
+        price_band_text = {
+            "Under ₹50": "under 50",
+            "₹50 – ₹100": "between 50 to 100",
+            "₹100 – ₹200": "between 100 to 200",
+            "₹200 – ₹300": "between 200 to 300",
+            "₹300 – ₹500": "between 300 to 500",
+            "Above ₹500": "above 500",
+        }.get(sel_price_band)
+        if price_band_text:
+            parts.append(price_band_text)
         summary_text = "Manual filter: " + ", ".join(parts) if parts else "Manual filter: any coffee"
         process_message(summary_text)
         st.rerun()
