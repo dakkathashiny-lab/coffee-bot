@@ -258,6 +258,18 @@ def _best_fuzzy_match(text, vocab, cutoff=0.7, exclude_words=None):
             score = difflib.SequenceMatcher(None, concat, cand_l.replace(" ", "")).ratio()
             if score > best_score:
                 best_score, best = score, candidate
+        # reverse case: a multi-word candidate name (e.g. "Tamil Nadu") typed
+        # as one compound word ("tamilnadu") - check each word in the message
+        # individually against the no-space candidate, so this works whether
+        # it's typed alone or embedded in a longer sentence
+        if n > 1:
+            no_space_cand = cand_l.replace(" ", "")
+            for w in words:
+                if w in exclude:
+                    continue
+                score = difflib.SequenceMatcher(None, w, no_space_cand).ratio()
+                if score > best_score:
+                    best_score, best = score, candidate
 
     return (best, best_score) if best_score >= cutoff else (None, 0.0)
 
