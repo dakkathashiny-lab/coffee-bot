@@ -680,12 +680,7 @@ if query_params.get("admin") == ADMIN_SECRET:
     st.stop()  # don't render the normal chat below when in admin mode
 
 st.title("☕ India Coffee Recommender")
-st.caption(
-    "I help you find Indian coffee brands based on your taste — no more "
-    "scrolling through endless options on Amazon or Flipkart. Tell me a "
-    "region, a strength, a milk type, or a budget, and I'll match you to "
-    "real products."
-)
+st.caption("Find Indian coffee by taste — region, strength, milk type, or budget.")
 
 WELCOME_MESSAGE = (
     "Hi! 👋 I'm your coffee recommender, focused only on Indian coffee.\n\n"
