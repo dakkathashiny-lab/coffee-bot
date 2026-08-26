@@ -801,6 +801,16 @@ def process_message(text):
     st.session_state["messages"].append(("assistant", reply, products_for_images))
     st.session_state["scroll_to_latest"] = True
 
+    # keep a running record of every search this session, separate from the
+    # main display, so past results can be compared without cluttering the
+    # current view or reintroducing the long-page scroll problem
+    st.session_state.setdefault("search_history", [])
+    st.session_state["search_history"].append({
+        "query": text,
+        "reply": reply,
+        "products": products_for_images,
+    })
+
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [("assistant", WELCOME_MESSAGE, None)]
@@ -882,6 +892,23 @@ if st.session_state.get("scroll_to_latest"):
         })();
         </script>
     """, unsafe_allow_html=True)
+
+# collapsible search history - lets users compare past searches without
+# cluttering the main view above, which stays clean showing just the latest result
+history = st.session_state.get("search_history", [])
+past_searches = history[:-1] if len(history) > 1 else []  # exclude the current one, already shown above
+if past_searches:
+    with st.expander(f"📜 Search History ({len(past_searches)} earlier search{'es' if len(past_searches) != 1 else ''})"):
+        for i, entry in enumerate(reversed(past_searches), start=1):
+            st.markdown(f"**{i}. You asked:** {entry['query']}")
+            st.markdown(entry["reply"])
+            if entry["products"] is not None and not entry["products"].empty:
+                cols = st.columns(min(len(entry["products"]), 5))
+                for col, (_, prow) in zip(cols, entry["products"].iterrows()):
+                    with col:
+                        st.image(get_image_path(prow), use_container_width=True)
+                        st.caption(f"{prow['Brand']}\n{format_price(prow)}")
+            st.divider()
 
 # quick-start buttons only shown before the user has typed anything, so
 # they don't clutter an already-active conversation
